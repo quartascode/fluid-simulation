@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <raylib.h>
+#include <raymath.h>
 #include <vector>
 
 struct Particle {
@@ -9,6 +10,7 @@ struct Particle {
 
 	Vector2 position;
 	Vector2 velocity;
+	Vector2 acceleration;
 
 	float radius;
 
@@ -52,13 +54,49 @@ class Simulation {
 
 		const std::vector<Particle>& GetParticles() const { return particles; }
 
-		void HandleBorderCollision(float width, float height) {
-			// bounding box centered at 0, 0
-
+		void Update(float dt) {
+			for (auto& p : particles) {
+				Integrate(p, dt);
+				HandleBorderCollision(p, 600, 400);
+			}
 		}
 
 	private:
 		std::vector<Particle> particles;
+
+		void Integrate(Particle& p, float dt) {
+			p.acceleration.y = -9.81;
+
+			p.velocity += p.acceleration * dt;
+			p.position += p.velocity * dt;
+		}
+
+		void HandleBorderCollision(Particle& p, float width, float height) {
+			// bounding box centered at 0, 0
+			float r = p.radius;
+			
+			float right  = width / 2;
+			float left   = -right;
+			float top    = height / 2;
+			float bottom = -top;
+
+			if (p.position.x + r >= right) {
+				p.position.x = right - r;		
+				p.velocity.x = -p.velocity.x;
+			}
+			if (p.position.x - r <= left) {
+				p.position.x = left + r;		
+				p.velocity.x = -p.velocity.x;
+			}
+			if (p.position.y + r >= top) {
+				p.position.y = top - r;
+				p.velocity.y = -p.velocity.y;
+			}
+			if (p.position.y - r >= bottom) {
+				p.position.y = bottom + r;
+				p.velocity.y = -p.velocity.y;
+			}
+		}
 };
 
 int main(void) {
